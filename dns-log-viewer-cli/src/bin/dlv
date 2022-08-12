@@ -1,0 +1,14 @@
+#!/bin/bash
+
+FULL_PATH_TO_SCRIPT="$(realpath -s "$0")"
+SCRIPT_DIRECTORY="$(dirname "$FULL_PATH_TO_SCRIPT")"
+
+mkdir -p ${SCRIPT_DIRECTORY}/Data/Logs
+
+java -Xmx1g \
+    "-Dus.gantzfamily.dlv.cli.homeDir=${SCRIPT_DIRECTORY}" \
+    "-Dus.gantzfamily.dlv.cli.logLevel=INFO" \
+    "-Djava.library.path=${SCRIPT_DIRECTORY}/lib" \
+    -jar ${SCRIPT_DIRECTORY}/DnsLogViewer/dns-log-viewer-cli.jar \
+    "$@"
+
