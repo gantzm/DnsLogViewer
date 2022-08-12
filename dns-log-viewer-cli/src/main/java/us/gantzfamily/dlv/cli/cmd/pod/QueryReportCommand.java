@@ -8,8 +8,13 @@ import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
+import java.util.stream.Collectors;
 
 import com.gantzgulch.tools.common.lang.GGCloseables;
 import com.google.inject.Inject;
@@ -26,6 +31,8 @@ public class QueryReportCommand extends AbstractCommand<QueryReportParameters> {
 	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS Z");
 
 	private List<Query> queries = new ArrayList<>();
+
+	private Map<String, Set<String>> groupMap = new HashMap<>();
 
 	@Inject
 	public QueryReportCommand(//
@@ -53,12 +60,43 @@ public class QueryReportCommand extends AbstractCommand<QueryReportParameters> {
 			queries //
 					.stream() //
 					.sorted() //
-					.forEach(q -> {
-						System.out.println("Query: " + q);
-					});
+					.forEach(this::process);
 		}
 
+		final List<String> keys = groupMap.keySet().stream().sorted().collect(Collectors.toList());
+		
+		for(final String key : keys) {
+			
+			System.out.println("");
+			System.out.println("Client: " + key);
+			
+			final Set<String> s = groupMap.get(key);
+			
+			final List<String> queryList = s.stream().sorted().collect(Collectors.toList());
+			
+			for(final String q : queryList ) {
+				
+				System.out.println("    " + q);
+			}
+			
+		}
+		
 		return 0;
+	}
+
+	private void process(final Query query) {
+
+		System.out.println("Query: " + query);
+
+		final String clientIp = query.getClientIpAddress();
+		final String domainRev = query.getReverseQuery();
+
+		final Set<String> s = groupMap.computeIfAbsent(clientIp, k -> {
+			return new HashSet<>();
+		});
+		
+		s.add(domainRev);
+
 	}
 
 	private void readLogs() {
@@ -100,7 +138,7 @@ public class QueryReportCommand extends AbstractCommand<QueryReportParameters> {
 			headerWritten = true;
 		}
 
-		public void writeDetail(final Query dmcArtifact) {
+		public void writeDetail(final Query query) {
 
 //                return;
 //            }
