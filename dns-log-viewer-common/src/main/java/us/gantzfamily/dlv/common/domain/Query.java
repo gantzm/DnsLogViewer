@@ -35,7 +35,12 @@ public class Query implements Comparable<Query> {
 	private final Date ts;
 
 	private final String clientIpAddress;
+	
 	private final String queryDomain;
+	
+	private final String[] reverseParts;
+	
+	private final String reverseDomain;
 
 	public Query(//
 			final Date ts, //
@@ -45,6 +50,8 @@ public class Query implements Comparable<Query> {
 		this.ts = ts;
 		this.clientIpAddress = clientIpAddress;
 		this.queryDomain = queryDomain;
+		this.reverseParts = reverseParts(this.queryDomain);
+		this.reverseDomain = StringUtils.join(this.reverseParts, ".");
 	}
 
 	public Date getTimestamp() {
@@ -59,29 +66,14 @@ public class Query implements Comparable<Query> {
 		return queryDomain;
 	}
 
-	public String getReverseQuery() {
-		
-		if( StringUtils.isBlank(queryDomain)) {
-			return ".";
-		}
-		
-		final String[] parts = StringUtils.split(queryDomain, ".");
-		
-		final StringBuilder b = new StringBuilder();
-		
-		for(int i = parts.length; i > 0; i--) {
-			
-			if( b.length() > 0 ) {
-				b.append(".");
-			}
-			
-			b.append(parts[i-1]);
-			
-		}
-		
-		return b.toString();
-		
+	public String[] getReverseParts() {
+		return reverseParts;
 	}
+	
+	public String getReverseDomain() {
+		return reverseDomain;
+	}
+	
 	@Override
 	public int compareTo(final Query o) {
 		return ts.compareTo(o.ts);
@@ -90,6 +82,24 @@ public class Query implements Comparable<Query> {
 	@Override
 	public String toString() {
 		return ToStringBuilder.reflectionToString(this);
+	}
+
+	private String[] reverseParts(String queryDomain) {
+		
+		if( StringUtils.isBlank(queryDomain)) {
+			return new String[0];
+		}
+		
+		final String[] parts = StringUtils.split(queryDomain, ".");
+		
+		final String[] reverseParts = new String[parts.length];
+		
+		
+		for(int i=0, j=parts.length - 1; i<parts.length; i++, j--) {
+			reverseParts[j] = parts[i];
+		}
+		
+		return reverseParts;
 	}
 
 	public static Optional<Query> parse(final String queryText) {
